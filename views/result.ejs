@@ -10,18 +10,16 @@
   <div class="params">
     <p><strong>eps:</strong> <%= eps %></p>
     <p><strong>min_samples:</strong> <%= min_samples %></p>
-    <p><strong>Keywords:</strong></p>
-    <ul class="keyword-list">
-      <% keywords.forEach(k => { %><li><%= k %></li><% }) %>
-    </ul>
   </div>
 
   <div class="clusters-container">
-    <% clusters.forEach((group,i) => { %>
+    <% clusters.forEach((group, i) => { %>
       <div class="cluster">
-        <h3>Cluster <%= i+1 %></h3>
+        <h3><%= group.label || 'Cluster ' + (i + 1) %></h3>
         <ul>
-          <% group.forEach(n => { %><li><%= n %></li><% }) %>
+          <% group.files.forEach(n => { %>
+            <li><%= n %></li>
+          <% }) %>
         </ul>
       </div>
     <% }) %>

@@ -113,20 +113,22 @@ button[type="submit"]:hover {
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.7);
 }
 .cluster h3 {
-  color: #2e88ff;
   margin-bottom: 1rem;
-  font-size: 1.25rem;
+  font-size: 1rem;
+  font-weight: normal;
+  text-transform: capitalize;
 }
 .cluster ul {
   width: 100%;
 }
 .cluster li {
   font-size: 0.95rem;
-  color: #d0d0d0;
+  color: #2e88ff;
   margin-bottom: 0.5rem;
   word-break: break-word;
   text-transform: capitalize;
   margin-bottom: 20px;
+  font-weight: bold;
 }
 /* Keywords list: display inline, wrap as needed */
 .params ul {
