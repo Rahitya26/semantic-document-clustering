@@ -7,28 +7,26 @@
 </head>
 <body>
   <h2>Clustering Result</h2>
-
-  <div class="params" style="margin-bottom: 2rem; text-align: center;">
+  <div class="params">
     <p><strong>eps:</strong> <%= eps %></p>
     <p><strong>min_samples:</strong> <%= min_samples %></p>
-    <p><strong>Keywords Considered:</strong> <%= keywords.join(', ') %></p>
+    <p><strong>Keywords:</strong></p>
+    <ul class="keyword-list">
+      <% keywords.forEach(k => { %><li><%= k %></li><% }) %>
+    </ul>
   </div>
 
   <div class="clusters-container">
-    <% clusters.forEach((group, i) => { %>
+    <% clusters.forEach((group,i) => { %>
       <div class="cluster">
         <h3>Cluster <%= i+1 %></h3>
         <ul>
-          <% group.forEach(name => { %>
-            <li><%= name %></li>
-          <% }) %>
+          <% group.forEach(n => { %><li><%= n %></li><% }) %>
         </ul>
       </div>
     <% }) %>
   </div>
 
-  <div class="upload-more">
-    <a href="/"><button>Upload More Files</button></a>
-  </div>
+  <div class="upload-more"><a href="/"><button>Upload More Files</button></a></div>
 </body>
 </html>
