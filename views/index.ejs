@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Upload Files for Clustering</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <h2>Upload text files to cluster semantically</h2>
+  <form action="/upload" method="post" enctype="multipart/form-data" class="container">
+    <input type="file" id="fileInput" name="files" multiple accept=".txt" required>
+    <label for="fileInput">
+      Choose Files <span id="fileCount">(0 files)</span>
+    </label>
+    <button type="submit">Upload &amp; Cluster</button>
+  </form>
+
+  <script>
+    const input = document.getElementById('fileInput');
+    const counter = document.getElementById('fileCount');
+    input.addEventListener('change', () => {
+      const n = input.files.length;
+      counter.textContent = `(${n} file${n !== 1 ? 's' : ''})`;
+    });
+  </script>
+</body>
+</html>

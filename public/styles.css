@@ -1,0 +1,148 @@
+/* Import a modern font */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+/* Reset & base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: 'Montserrat';
+  background-color: #181a1f;
+  color: #e0e0e0;
+  min-height: 100vh;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Headings */
+h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+  font-weight: 600;
+}
+
+/* Utility */
+.container {
+  width: 100%;
+  max-width: 800px;
+  margin: auto;
+}
+
+/* Form Styles */
+form {
+  background: #20232a;
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  animation: fadeIn 0.6s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px) }
+  to   { opacity: 1; transform: translateY(0) }
+}
+input[type="file"] {
+  display: none;
+}
+label[for="fileInput"] {
+  background: #2e88ff;
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  text-align: center;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  position: relative;
+  font-size: 1rem;
+}
+label[for="fileInput"]:hover {
+  background: #3f9bff;
+  transform: translateY(-2px);
+}
+#fileCount {
+  margin-left: 0.5rem;
+  font-weight: 400;
+  color: #c0c0c0;
+}
+button[type="submit"] {
+  background: #1f6feb;
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+button[type="submit"]:hover {
+  background: #3a8cff;
+  transform: translateY(-2px);
+}
+
+/* Result Styles */
+.clusters-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center;
+  margin-top: 2rem;
+  animation: fadeIn 0.6s ease-out;
+}
+.cluster {
+  background: #20232a;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+  width: 220px;
+  transition: transform 0.3s, box-shadow 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.cluster:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.7);
+}
+.cluster h3 {
+  color: #2e88ff;
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+}
+.cluster ul {
+  width: 100%;
+}
+.cluster li {
+  font-size: 0.95rem;
+  color: #d0d0d0;
+  margin-bottom: 0.5rem;
+  word-break: break-word;
+  text-transform: capitalize;
+  margin-bottom: 20px;
+}
+
+/* Upload More */
+.upload-more {
+  margin-top: 2.5rem;
+}
+.upload-more button {
+  background: #1f6feb;
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+.upload-more button:hover {
+  background: #3a8cff;
+  transform: translateY(-2px);
+}
