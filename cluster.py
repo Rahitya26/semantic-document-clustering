@@ -1,127 +1,93 @@
-# import sys
-# import json
-# import os
-# import numpy as np
-# from sklearn.cluster import DBSCAN
-# from sklearn.metrics import pairwise_distances
-# from sentence_transformers import SentenceTransformer
-# from sklearn.feature_extraction.text import CountVectorizer
-
-# # 1) Read input (list of {path, name} objects)
-# files = json.loads(sys.stdin.read())
-
-# # 2) Read file contents
-# contents, names = [], []
-# for f in files:
-#     try:
-#         with open(f['path'], 'r', encoding='utf-8') as file:
-#             contents.append(file.read())
-#     except:
-#         contents.append('')
-#     names.append(f['name'])
-
-# # 3) Load the model & 4) create embeddings
-# model = SentenceTransformer('all-MiniLM-L6-v2')
-# embeddings = model.encode(contents)
-
-# # 5) Auto-calc eps
-# distances = pairwise_distances(embeddings, metric='cosine')
-# np.fill_diagonal(distances, np.inf)
-# nearest_distances = np.min(distances, axis=1)
-# auto_eps = np.percentile(nearest_distances, 75)
-
-# # 6) DBSCAN
-# dbscan = DBSCAN(eps=auto_eps, min_samples=1, metric='cosine')
-# labels = dbscan.fit_predict(embeddings)
-
-# # 7) Extract top-10 keywords across all documents
-# vectorizer = CountVectorizer(stop_words='english', max_features=10)
-# _ = vectorizer.fit_transform(contents)
-# keywords = vectorizer.get_feature_names_out()
-
-# # 8) Group names into clusters
-# clusters = {}
-# for name, lbl in zip(names, labels):
-#     clusters.setdefault(str(lbl), []).append(name)
-
-# # 9) Build result, casting NumPy types to native
-# result = {
-#     "eps": float(auto_eps),           # cast to Python float
-#     "min_samples": 1,
-#     "keywords": list(keywords),       # already Python strings
-#     "clusters": list(clusters.values())
-# }
-
-# print(json.dumps(result))
-
-# Top keyword labelling starts here
-
 import sys
 import json
-import os
+import re
 import numpy as np
 from sklearn.cluster import DBSCAN
-from sklearn.metrics import pairwise_distances
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import pairwise_distances, cosine_similarity
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sentence_transformers import SentenceTransformer
+import mammoth
+import pdfplumber
 
-# 1) Read input (list of {path, name} objects)
+# 0) Setup
+model = SentenceTransformer('all-mpnet-base-v2')
+junk_phrases = ["abstract","introduction","conclusion","references",
+                "table of contents","acknowledgments","index","appendix"]
+def clean_text(text):
+    t = text.lower()
+    t = re.sub(r'\d+','',t)
+    t = re.sub(r'[^\w\s]','',t)
+    t = re.sub(r'\s+',' ',t)
+    for p in junk_phrases:
+        t = t.replace(p,'')
+    return t.strip()
+
+# 1) PDF / DOCX / TXT extraction
+def extract_pdf(path):
+    with pdfplumber.open(path) as pdf:
+        return "\n".join(page.extract_text() or "" for page in pdf.pages)
+def extract_docx(path):
+    with open(path,'rb') as f:
+        return mammoth.extract_raw_text(f).value
+def extract_all(entry):
+    p, name = entry['path'], entry['name']
+    if p.lower().endswith('.pdf'):
+        return name, extract_pdf(p)
+    if p.lower().endswith('.docx'):
+        return name, extract_docx(p)
+    # fallback to txt
+    return name, open(p, encoding='utf-8', errors='ignore').read()
+
+# 2) Read + extract + clean
 files = json.loads(sys.stdin.read())
+names, texts = zip(*[  
+    (n, clean_text(txt))
+    for n, txt in map(extract_all, files)
+])
 
-# 2) Read file contents
-contents, names = [], []
-for f in files:
-    try:
-        with open(f['path'], 'r', encoding='utf-8') as file:
-            contents.append(file.read())
-    except:
-        contents.append('')
-    names.append(f['name'])
+# 3) Embed **all** cleaned texts
+embs = model.encode(texts, show_progress_bar=False,
+                    batch_size=16, convert_to_numpy=True)
 
-# 3) Load the model & create embeddings
-model = SentenceTransformer('all-MiniLM-L6-v2')
-embeddings = model.encode(contents)
+# 4) Deduplicate by embedding similarity
+unique_names = []
+unique_embs  = []
+for name, emb in zip(names, embs):
+    if not unique_embs:
+        unique_names.append(name)
+        unique_embs.append(emb)
+        continue
+    sims = cosine_similarity([emb], unique_embs)[0]
+    if sims.max() < 0.95:
+        unique_names.append(name)
+        unique_embs.append(emb)
+# convert back to numpy
+unique_embs = np.vstack(unique_embs)
 
-# 4) Auto-calculate eps
-distances = pairwise_distances(embeddings, metric='cosine')
-np.fill_diagonal(distances, np.inf)
-nearest_distances = np.min(distances, axis=1)
-auto_eps = np.percentile(nearest_distances, 75)
+# 5) Compute eps for DBSCAN
+dists = pairwise_distances(unique_embs, metric='cosine')
+np.fill_diagonal(dists, np.inf)
+eps = float(np.percentile(np.min(dists, axis=1), 75))
 
-# 5) Clustering using DBSCAN
-dbscan = DBSCAN(eps=float(auto_eps), min_samples=1, metric='cosine')
-labels = dbscan.fit_predict(embeddings)
+# 6) DBSCAN clustering
+labels = DBSCAN(eps=eps, min_samples=1, metric='cosine').fit_predict(unique_embs)
 
-# 6) Organize documents by cluster
+# 7) Group names by cluster
 clusters = {}
-for content, name, label in zip(contents, names, labels):
-    label = str(label)
-    if label not in clusters:
-        clusters[label] = {
-            "files": [],
-            "texts": []
-        }
-    clusters[label]["files"].append(name)
-    clusters[label]["texts"].append(content)
+for lbl, nm in zip(labels, unique_names):
+    clusters.setdefault(str(lbl), []).append(nm)
 
-# 7) Extract top keywords separately for each cluster
-final_clusters = []
-for label, data in clusters.items():
-    vectorizer = CountVectorizer(stop_words='english', max_features=5)
-    X = vectorizer.fit_transform(data["texts"])
-    keywords = vectorizer.get_feature_names_out()
+# 8) Extract 3 TF-IDF keywords per cluster
+final = []
+for lbl, group in clusters.items():
+    # gather original texts for this group
+    grp_texts = [texts[names.index(n)] for n in group]
+    vec = TfidfVectorizer(stop_words='english', max_features=3)
+    X = vec.fit_transform(grp_texts)
+    kws = vec.get_feature_names_out()
+    label = ", ".join(kws) if len(kws) else f"Cluster {lbl}"
+    final.append({"label": label, "files": group})
 
-    final_clusters.append({
-        "label": ", ".join(keywords) if keywords.size > 0 else f"Cluster {label}",
-        "files": data["files"]
-    })
-
-# 8) Build and print final result
-result = {
-    "eps": float(auto_eps),
-    "min_samples": 1,
-    "clusters": final_clusters
-}
-
-print(json.dumps(result))
-
+# 9) Output
+out = {"eps": eps, "min_samples": 1, "clusters": final}
+sys.stdout.write(json.dumps(out))
