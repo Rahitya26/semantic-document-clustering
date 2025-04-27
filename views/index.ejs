@@ -10,14 +10,34 @@
   <form action="/upload" method="post" enctype="multipart/form-data" class="container">
     <input type="file" id="fileInput" name="files" multiple accept=".txt,.pdf,.docx" required>
     <label for="fileInput">Choose Files <span id="fileCount">(0 files)</span></label>
-    <button type="submit">Upload &amp; Cluster</button>
+    <button type="submit" id="submitBtn">Upload &amp; Cluster</button>
   </form>
+  
+  <div id="loader" class="loader-container">
+    <div class="loader"></div>
+    <p>Processing documents...</p>
+  </div>
+  
   <script>
     const inp = document.getElementById('fileInput'),
-          cnt = document.getElementById('fileCount');
+          cnt = document.getElementById('fileCount'),
+          form = document.querySelector('form'),
+          loader = document.getElementById('loader'),
+          submitBtn = document.getElementById('submitBtn');
+
+    // Update file count display
     inp.addEventListener('change', () => {
       const n = inp.files.length;
       cnt.textContent = `(${n} file${n!==1?'s':''})`;
+    });
+
+    // Show loader when form is submitted
+    form.addEventListener('submit', (e) => {
+      // Optional: Add a small delay to prevent flicker if files are very small
+      setTimeout(() => {
+        loader.style.display = 'flex';
+        submitBtn.disabled = true;
+      }, 100);
     });
   </script>
 </body>
